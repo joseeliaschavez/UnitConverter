@@ -1,6 +1,5 @@
 package com.rangerforce.unitconverter
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,10 +27,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.rangerforce.unitconverter.ui.theme.UnitConverterTheme
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,14 +57,22 @@ fun UnitConverter(modifier: Modifier = Modifier) {
     var inputValue by remember { mutableStateOf("") }
     var outputValue by remember { mutableStateOf("Result") }
 
+    val headerTextStyle = TextStyle(
+        fontSize = 24.sp
+    )
+
+    fun getInputValue(): Double {
+        return inputValue.toDoubleOrNull() ?: 0.0
+    }
+
     fun handleFromSelectionChange(unit: String) {
         setFromUnit(unit)
-        outputValue = convert(inputValue.toDouble(), unit, toUnit)
+        outputValue = convert(getInputValue(), unit, toUnit)
     }
 
     fun handleToSelectionChange(unit: String) {
         setToUnit(unit)
-        outputValue = convert(inputValue.toDouble(), fromUnit, unit)
+        outputValue = convert(getInputValue(), fromUnit, unit)
     }
 
     Column(
@@ -70,24 +80,43 @@ fun UnitConverter(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Unit Converter", modifier = Modifier.padding(16.dp))
-        OutlinedTextField(
-            value = inputValue,
-            onValueChange = {
-                inputValue = it
-                outputValue = convert(it.toDouble(), fromUnit, toUnit)
-            },
-            placeholder = { Text("Enter value") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.padding(horizontal = 16.dp))
+        Text(text = "Unit Converter",
+//            style = MaterialTheme.typography.headlineMedium,
+            style = headerTextStyle, // Example of using a custom text style, but you should use the MaterialTheme.typography styles
+            modifier = Modifier.padding(16.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp)
         ) {
+            OutlinedTextField(
+                value = inputValue,
+                onValueChange = {
+                    inputValue = it
+                    outputValue = convert(getInputValue(), fromUnit, toUnit)
+                },
+                placeholder = { Text("Enter value") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // Force Android to show a numeric keyboard
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .weight(1.5f))
             ComboBox(options = conversionUnits, fromUnit, ::handleFromSelectionChange, modifier = Modifier.weight(1f))
+        }
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            OutlinedTextField(
+                value = outputValue,
+                onValueChange = {},
+                placeholder = { Text("Result") },
+                readOnly = true,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .weight(1.5f))
             ComboBox(options = conversionUnits, toUnit, ::handleToSelectionChange, modifier = Modifier.weight(1f))
         }
-        Text(text = outputValue, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -120,7 +149,6 @@ fun ComboBox(options: List<String>,
     }
 }
 
-@SuppressLint("DefaultLocale")
 fun convert(inputValue: Double, fromUnit: String, toUnit: String): String {
     // Conversion logic
     // First convert to base unit (meter)
@@ -141,7 +169,7 @@ fun convert(inputValue: Double, fromUnit: String, toUnit: String): String {
         "Miles" -> baseValue / 1609.34
         else -> baseValue
     }
-    return String.format("%.4f", convertedValue)
+    return String.format(Locale.getDefault(), "%.4f", convertedValue)
 }
 
 @Preview(showBackground = true)
